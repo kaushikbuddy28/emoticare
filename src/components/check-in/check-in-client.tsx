@@ -61,6 +61,9 @@ export default function CheckInClient() {
     setTextInput("");
     setResult(null);
   }
+  
+  const StepIcon = steps[currentStepIndex].icon;
+
 
   const renderStepContent = () => {
     switch (currentStep) {
@@ -135,7 +138,7 @@ export default function CheckInClient() {
       <CardHeader>
         <Progress value={progressValue} className="mb-4" />
         <CardTitle className="flex items-center gap-2">
-          {steps[currentStepIndex].icon({ className: "h-6 w-6 text-primary" })}
+          <StepIcon className="h-6 w-6 text-primary" />
           {steps[currentStepIndex].title}
         </CardTitle>
         <CardDescription>
