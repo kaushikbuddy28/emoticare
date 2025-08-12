@@ -1,8 +1,8 @@
+
 "use client"
 
-import { useState, useTransition } from "react"
+import { useState, useTransition, useEffect, useRef } from "react"
 import { Camera, Mic, FileText, Sparkles, Loader2, ArrowRight, ArrowLeft } from "lucide-react"
-import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
@@ -11,6 +11,7 @@ import { predictMoodAction } from "@/lib/actions"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import type { MoodPredictionOutput } from "@/ai/flows/mood-prediction"
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, LabelList } from "recharts"
+import { useToast } from "@/hooks/use-toast"
 
 type Step = "face" | "voice" | "text" | "result"
 
@@ -21,11 +22,132 @@ const steps: { id: Step; title: string; icon: React.ElementType }[] = [
   { id: "result", title: "Your Mood", icon: Sparkles },
 ]
 
+function AudioVisualizer({ stream }: { stream: MediaStream | null }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+
+  useEffect(() => {
+    if (!stream || !canvasRef.current) return
+
+    const audioContext = new AudioContext()
+    const analyser = audioContext.createAnalyser()
+    const source = audioContext.createMediaStreamSource(stream)
+    source.connect(analyser)
+    analyser.fftSize = 256
+    const bufferLength = analyser.frequencyBinCount
+    const dataArray = new Uint8Array(bufferLength)
+
+    const canvas = canvasRef.current
+    const canvasCtx = canvas.getContext("2d")
+    let animationFrameId: number;
+
+    const draw = () => {
+      animationFrameId = requestAnimationFrame(draw)
+      analyser.getByteFrequencyData(dataArray)
+      if (canvasCtx) {
+        canvasCtx.fillStyle = "hsl(var(--muted))"
+        canvasCtx.fillRect(0, 0, canvas.width, canvas.height)
+        const barWidth = (canvas.width / bufferLength) * 2.5
+        let x = 0
+        for (let i = 0; i < bufferLength; i++) {
+          const barHeight = dataArray[i] / 2
+          canvasCtx.fillStyle = `hsl(var(--primary))`
+          canvasCtx.fillRect(x, canvas.height - barHeight, barWidth, barHeight)
+          x += barWidth + 1
+        }
+      }
+    }
+
+    draw()
+
+    return () => {
+      cancelAnimationFrame(animationFrameId)
+      stream.getTracks().forEach(track => track.stop())
+      audioContext.close()
+    }
+  }, [stream])
+
+  return <canvas ref={canvasRef} className="w-full h-40 rounded-lg" />;
+}
+
 export default function CheckInClient() {
   const [currentStep, setCurrentStep] = useState<Step>("face")
   const [textInput, setTextInput] = useState("")
   const [result, setResult] = useState<MoodPredictionOutput | null>(null)
   const [isPending, startTransition] = useTransition()
+  const { toast } = useToast()
+
+  const [hasCameraPermission, setHasCameraPermission] = useState(false)
+  const [hasMicPermission, setHasMicPermission] = useState(false)
+  const [audioStream, setAudioStream] = useState<MediaStream | null>(null);
+
+  const videoRef = useRef<HTMLVideoElement>(null)
+
+  useEffect(() => {
+    let stream: MediaStream;
+    const getCameraPermission = async () => {
+      if (currentStep !== 'face') return;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({video: true});
+        setHasCameraPermission(true);
+
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+        }
+      } catch (error) {
+        console.error('Error accessing camera:', error);
+        setHasCameraPermission(false);
+        toast({
+          variant: 'destructive',
+          title: 'Camera Access Denied',
+          description: 'Please enable camera permissions in your browser settings to use this feature.',
+        });
+      }
+    };
+    
+    if (currentStep === 'face') {
+        getCameraPermission();
+    }
+
+    return () => {
+        if(stream) {
+            stream.getTracks().forEach(track => track.stop());
+        }
+    }
+  }, [currentStep, toast]);
+
+  useEffect(() => {
+    let stream: MediaStream;
+    const getMicPermission = async () => {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({audio: true});
+        setHasMicPermission(true);
+        setAudioStream(stream);
+      } catch (error) {
+        console.error('Error accessing microphone:', error);
+        setHasMicPermission(false);
+        toast({
+          variant: 'destructive',
+          title: 'Microphone Access Denied',
+          description: 'Please enable microphone permissions in your browser settings to use this feature.',
+        });
+      }
+    };
+
+    if (currentStep === 'voice') {
+      getMicPermission();
+    } else {
+        if(audioStream){
+            audioStream.getTracks().forEach(track => track.stop());
+            setAudioStream(null);
+        }
+    }
+    
+    return () => {
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+        }
+    }
+  }, [currentStep, toast, audioStream]);
   
   const currentStepIndex = steps.findIndex(s => s.id === currentStep)
   const progressValue = ((currentStepIndex + 1) / steps.length) * 100
@@ -45,6 +167,14 @@ export default function CheckInClient() {
   }
 
   const handleFinish = () => {
+    if(!textInput.trim()){
+      toast({
+        variant: 'destructive',
+        title: 'Input Required',
+        description: 'Please share your thoughts before getting a result.',
+      })
+      return;
+    }
     startTransition(async () => {
       const prediction = await predictMoodAction({
         faceEmbedding: [], // Mocked
@@ -70,9 +200,18 @@ export default function CheckInClient() {
       case "face":
         return (
           <CardContent className="flex flex-col items-center gap-4 text-center">
-            <div className="w-full aspect-video bg-muted rounded-lg flex items-center justify-center overflow-hidden">
-               <Image src="https://placehold.co/600x400" alt="Webcam preview" width={600} height={400} data-ai-hint="webcam selfie" />
+             <div className="w-full aspect-video bg-muted rounded-lg flex items-center justify-center overflow-hidden">
+               <video ref={videoRef} className="w-full aspect-video rounded-md" autoPlay muted playsInline />
             </div>
+            { !hasCameraPermission && (
+              <Alert variant="destructive" className="text-left">
+                <Camera className="h-4 w-4" />
+                <AlertTitle>Camera Access Required</AlertTitle>
+                <AlertDescription>
+                  Please allow camera access to use this feature. Your browser may be blocking access.
+                </AlertDescription>
+              </Alert>
+            )}
             <p className="text-sm text-muted-foreground">Position your face in the frame. We'll analyze your expression to understand your emotions. This is a simulation.</p>
           </CardContent>
         )
@@ -80,8 +219,21 @@ export default function CheckInClient() {
         return (
           <CardContent className="flex flex-col items-center gap-4 text-center">
             <div className="w-full h-40 bg-muted rounded-lg flex items-center justify-center">
-              <Mic className="h-16 w-16 text-primary" />
+               {hasMicPermission && audioStream ? (
+                <AudioVisualizer stream={audioStream} />
+               ) : (
+                <Mic className="h-16 w-16 text-muted-foreground" />
+               )}
             </div>
+             { !hasMicPermission && (
+              <Alert variant="destructive" className="text-left">
+                <Mic className="h-4 w-4" />
+                <AlertTitle>Microphone Access Required</AlertTitle>
+                <AlertDescription>
+                  Please allow microphone access to use this feature. Your browser may be blocking access.
+                </AlertDescription>
+              </Alert>
+            )}
             <p className="text-sm text-muted-foreground">When you're ready, we'll ask you to speak for a few seconds to analyze your vocal tone for signs of stress. This is a simulation.</p>
           </CardContent>
         )
