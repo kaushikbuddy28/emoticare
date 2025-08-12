@@ -1,1 +1,6 @@
-// Flows will be imported for their side effects in this file.
+import { config } from 'dotenv';
+config();
+
+import '@/ai/flows/chat-companion.ts';
+import '@/ai/flows/journal-entry-analysis.ts';
+import '@/ai/flows/mood-prediction.ts';
