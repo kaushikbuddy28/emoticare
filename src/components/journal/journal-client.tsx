@@ -11,7 +11,7 @@ import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
 import type { JournalEntry } from "@/lib/types"
-import { analyzeJournalEntry } from "@/lib/actions"
+import { analyzeJournalEntryAction } from "@/lib/actions"
 
 const mockEntries: JournalEntry[] = [
   {
@@ -40,7 +40,7 @@ export default function JournalClient() {
     if (!newEntry.trim()) return
 
     startTransition(async () => {
-      const result = await analyzeJournalEntry({ text: newEntry })
+      const result = await analyzeJournalEntryAction({ text: newEntry })
       const entry: JournalEntry = {
         id: new Date().toISOString(),
         createdAt: new Date().toISOString(),
