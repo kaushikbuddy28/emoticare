@@ -21,7 +21,15 @@ export type MoodPredictionInput = z.infer<typeof MoodPredictionInputSchema>;
 
 const MoodPredictionOutputSchema = z.object({
   mood: z.string().describe('The predicted mood.'),
-  probabilities: z.record(z.number()).describe('Probabilities for each mood category.'),
+  probabilities: z
+    .object({
+      happy: z.number().describe('Probability of being happy.'),
+      sad: z.number().describe('Probability of being sad.'),
+      neutral: z.number().describe('Probability of being neutral.'),
+      anxious: z.number().describe('Probability of being anxious.'),
+      angry: z.number().describe('Probability of being angry.'),
+    })
+    .describe('Probabilities for each mood category.'),
   recommendedAction: z.string().describe('A recommended action based on the predicted mood.'),
 });
 export type MoodPredictionOutput = z.infer<typeof MoodPredictionOutputSchema>;
