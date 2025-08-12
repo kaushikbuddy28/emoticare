@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { Progress } from "@/components/ui/progress"
-import { predictMood } from "@/lib/actions"
+import { predictMoodAction } from "@/lib/actions"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import type { MoodPredictionOutput } from "@/ai/flows/mood-prediction"
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, LabelList } from "recharts"
@@ -46,7 +46,7 @@ export default function CheckInClient() {
 
   const handleFinish = () => {
     startTransition(async () => {
-      const prediction = await predictMood({
+      const prediction = await predictMoodAction({
         faceEmbedding: [], // Mocked
         audioEmbedding: [], // Mocked
         text: textInput,

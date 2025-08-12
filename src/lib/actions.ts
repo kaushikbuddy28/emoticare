@@ -25,12 +25,6 @@ export async function analyzeJournalEntryAction(
 export async function predictMoodAction(
   input: MoodPredictionInput
 ): Promise<MoodPredictionOutput> {
-  // Mocking embeddings as they would come from the client
-  const mockInput = {
-      faceEmbedding: [0.1, 0.2, 0.3],
-      audioEmbedding: [0.4, 0.5, 0.6],
-      ...input,
-  }
-  const response = await predictMood(mockInput)
+  const response = await predictMood(input)
   return response
 }
