@@ -1,6 +1,6 @@
 # EmotiCare - AI-Powered Mental Well-being App
 
-EmotiCare is an empathetic, privacy-first web application designed to support your mental well-being journey. It provides a suite of tools powered by generative AI to help you reflect, understand your emotions, and find support when you need it. This project is built with Next.js and Firebase Studio.
+EmotiCare is an empathetic, privacy-first web application designed to support your mental well-being journey. It provides a suite of tools powered by generative AI to help you reflect, understand your emotions, and find support when you need it. This project is built with Next.js by kaushik.
 
 ## About The Project
 
@@ -65,3 +65,5 @@ You'll need the following software installed on your machine:
     Once the server is running, open [http://localhost:9002](http://localhost:9002) to see the application.
 
 You are now ready to explore and develop the EmotiCare application locally!
+
+# 7thsem
