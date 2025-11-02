@@ -1,0 +1,81 @@
+# EmotiCare: Detailed Project Overview
+
+## 1. Core Idea & Vision
+
+EmotiCare is envisioned as an empathetic, privacy-first mental wellness companion. The core idea is to leverage technology, particularly AI, to provide accessible and non-judgmental support for daily mental well-being.
+
+The application is not a replacement for professional therapy but acts as a supplementary tool. It helps users become more aware of their emotional patterns, provides a private space for reflection, and offers immediate, supportive interaction when needed. The vision is to make mental wellness practices an easy and integrated part of a user's daily routine.
+
+---
+
+## 2. Feature Breakdown
+
+### a. Dashboard
+- **Purpose:** The central hub for the user, offering a quick summary of their well-being journey.
+- **Components:**
+    - **Mood Timeline:** A chart that visualizes the user's mood trends over the past 14 days. This data is currently mocked but is designed to be populated by the results of check-ins and journal entries.
+    - **Quick Action Cards:** Two prominent cards that encourage user engagement:
+        - **"Ready for a Check-in?":** A call-to-action that directs the user to the Multimodal Check-in feature.
+        - **"Continue Journaling":** A shortcut to the Digital Journal to encourage regular reflection.
+- **User Value:** Provides an at-a-glance overview of emotional progress and encourages proactive engagement with the app's core tools.
+
+### b. Multimodal Check-in
+- **Purpose:** To provide a more holistic and accurate assessment of a user's current mood by combining three different data points. The use of camera and microphone is simulated in this prototype.
+- **User Flow (A 3-Step Process):**
+    1.  **Face Scan (Simulated):** The UI shows a camera feed. In a real application, this step would capture an image, generate a facial embedding, and send it to the AI for expression analysis. Here, it simulates camera access.
+    2.  **Voice Tone (Simulated):** The UI displays a voice visualizer. A real app would record a short audio clip, analyze its prosodic features (pitch, tone, energy), and generate an audio embedding. This prototype simulates microphone access.
+    3.  **Text Input:** The user is prompted to write down how they are feeling. This is the primary input used for the AI prediction in the current prototype.
+- **AI Integration:** The `predictMood` AI flow (`src/ai/flows/mood-prediction.ts`) takes these inputs (currently just text) and returns:
+    - A primary `mood` label (e.g., "Anxious", "Happy").
+    - A `probabilities` object showing the AI's confidence across different moods (Happy, Sad, Neutral, etc.), which is used to render a bar chart.
+    - A `recommendedAction` with a supportive suggestion.
+- **User Value:** Offers a guided way to pause and reflect on one's emotional state, with the AI providing an objective "second opinion."
+
+### c. Digital Journal
+- **Purpose:** A private, secure space for users to write down their thoughts and feelings.
+- **Components:**
+    - **New Entry Form:** A text area where users can compose a new journal entry.
+    - **Past Entries List:** A chronological list of all previous entries.
+- **AI Integration:** When an entry is saved, the `analyzeJournalEntry` AI flow (`src/ai/flows/journal-entry-analysis.ts`) is triggered. It analyzes the text and returns:
+    - `sentiment`: A classification (e.g., "positive", "negative", "neutral").
+    - `moodLabel`: A more descriptive label for the emotion (e.g., "Reflective", "Joyful").
+- **User Value:** Encourages the therapeutic practice of journaling and uses AI to help users identify patterns and themes in their thinking over time.
+
+### d. AI Chat Companion
+- **Purpose:** To provide an interactive, conversational space where users can talk freely.
+- **AI Principles:** The AI is designed based on Cognitive Behavioral Therapy (CBT) principles. It is:
+    - **Supportive & Non-judgmental:** It validates feelings without being prescriptive.
+    - **Asks Clarifying Questions:** It encourages the user to explore their thoughts more deeply.
+    - **Avoids Diagnosis:** It is explicitly designed not to provide clinical diagnoses.
+    - **Provides Grounding Exercises:** It can offer simple, actionable techniques if a user is feeling overwhelmed.
+- **AI Integration:** The `chatWithCompanion` AI flow (`src/ai/flows/chat-companion.ts`) receives the user's message and returns:
+    - `response`: The AI's conversational reply.
+    - `suggested_actions`: A list of potential CBT exercises or reflection points that are displayed in a separate card on the UI.
+- **User Value:** Offers a safe, "always-on" space to be heard, reducing feelings of isolation and providing constructive, CBT-informed feedback.
+
+### e. Emergency Support
+- **Purpose:** To provide immediate, actionable resources for users in crisis.
+- **Components:**
+    - **Helplines:** A clear, easy-to-read list of national crisis helplines (e.g., Suicide Prevention Lifeline).
+    - **Trusted Contacts:** A section where users can (theoretically) pre-configure and quickly contact a trusted person. The UI is present, but the functionality is a placeholder.
+- **User Value:** A critical safety feature that ensures users have immediate access to professional help if they are in crisis.
+
+---
+
+## 3. Technology & Architecture
+
+- **Framework:** **Next.js 14+** using the App Router. This enables a hybrid of Server and Client components, optimizing performance.
+- **UI/Styling:**
+    - **React:** For building the user interface.
+    - **TypeScript:** For type safety and better developer experience.
+    - **Tailwind CSS:** For utility-first styling.
+    - **ShadCN UI:** A collection of pre-built, accessible, and customizable React components that form the foundation of the UI (buttons, cards, etc.).
+- **Backend & AI:**
+    - **Next.js Server Actions:** The functions in `src/lib/actions.ts` are Server Actions. They provide a secure way for client components to call server-side code without needing to build traditional API endpoints. This is how the frontend communicates with the AI flows.
+    - **Genkit:** An open-source framework from Google used to build and orchestrate AI-powered features. It manages the interaction with the language models.
+    - **Google Gemini:** The underlying Large Language Model (LLM) used for all AI features. The `googleAI()` plugin is configured in `src/ai/genkit.ts`.
+- **Key Directories:**
+    - `src/app/`: Contains the pages and layouts of the application, following the Next.js App Router structure.
+    - `src/components/`: Contains all the reusable React components, organized by feature (e.g., `chat`, `journal`). The `ui` sub-folder holds the base ShadCN components.
+    - `src/lib/`: Contains shared utility functions (`utils.ts`), server actions (`actions.ts`), and type definitions (`types.ts`).
+    - `src/ai/`: The heart of the AI functionality. The `flows` sub-directory contains the individual Genkit flows for each feature.
