@@ -1,0 +1,30 @@
+# EmotiCare Project Requirements
+
+This file outlines the core technologies, frameworks, and libraries required to run and develop the EmotiCare application.
+
+## Core Framework & Language
+- **Next.js:** The React framework for server-side rendering, routing, and API handling.
+- **React:** The JavaScript library for building user interfaces.
+- **TypeScript:** The primary programming language, adding static types to JavaScript.
+
+## Styling & UI
+- **Tailwind CSS:** A utility-first CSS framework for styling the application.
+- **ShadCN UI:** A collection of reusable UI components built on top of Radix UI and Tailwind CSS.
+- **lucide-react:** A library for SVG icons.
+- **recharts:** A composable charting library for data visualization.
+
+## Generative AI
+- **Genkit:** The open-source framework from Google for building AI-powered features.
+- **Google Gemini:** The underlying large language model (LLM) accessed via Genkit.
+
+## Runtime Environment
+- **Node.js:** The JavaScript runtime environment (v18 or later recommended).
+- **npm / yarn:** The package manager for handling project dependencies listed in `package.json`.
+
+## Key npm Packages (from package.json)
+- `next`: The core Next.js library.
+- `react`, `react-dom`: The core React libraries.
+- `genkit`, `@genkit-ai/googleai`: Libraries for Genkit and the Google AI plugin.
+- `tailwindcss`: The Tailwind CSS library.
+- `@radix-ui/*`: The underlying primitive components for ShadCN UI.
+- `zod`: For schema validation, especially in AI flows.
