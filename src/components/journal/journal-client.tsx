@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react"
 import { format, parseISO } from "date-fns"
-import { Loader2, Sparkles, Wand2 } from "lucide-react"
+import { Loader2, Sparkles, Wand2, AlertTriangle } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -12,6 +12,9 @@ import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
 import type { JournalEntry } from "@/lib/types"
 import { analyzeJournalEntryAction } from "@/lib/actions"
+import { useApiKey } from "../api-key-provider"
+import { Alert, AlertDescription, AlertTitle } from "../ui/alert"
+import Link from "next/link"
 
 const mockEntries: JournalEntry[] = [
   {
@@ -31,29 +34,38 @@ const mockEntries: JournalEntry[] = [
 ]
 
 export default function JournalClient() {
+  const { apiKey } = useApiKey();
   const [entries, setEntries] = useState<JournalEntry[]>(mockEntries)
   const [newEntry, setNewEntry] = useState("")
   const [isPending, startTransition] = useTransition()
   const { toast } = useToast()
 
   const handleSaveEntry = () => {
-    if (!newEntry.trim()) return
+    if (!newEntry.trim() || !apiKey) return
 
     startTransition(async () => {
-      const result = await analyzeJournalEntryAction({ text: newEntry })
-      const entry: JournalEntry = {
-        id: new Date().toISOString(),
-        createdAt: new Date().toISOString(),
-        content: newEntry,
-        sentiment: result.sentiment,
-        moodLabel: result.moodLabel,
+      try {
+        const result = await analyzeJournalEntryAction({ text: newEntry, apiKey })
+        const entry: JournalEntry = {
+          id: new Date().toISOString(),
+          createdAt: new Date().toISOString(),
+          content: newEntry,
+          sentiment: result.sentiment,
+          moodLabel: result.moodLabel,
+        }
+        setEntries([entry, ...entries])
+        setNewEntry("")
+        toast({
+          title: "Entry Saved!",
+          description: `We've analyzed your entry. Mood: ${result.moodLabel}.`,
+        })
+      } catch (e: any) {
+        toast({
+          variant: 'destructive',
+          title: 'Analysis Failed',
+          description: 'Could not analyze entry. Please check your API key and try again.',
+        });
       }
-      setEntries([entry, ...entries])
-      setNewEntry("")
-      toast({
-        title: "Entry Saved!",
-        description: `We've analyzed your entry. Mood: ${result.moodLabel}.`,
-      })
     })
   }
 
@@ -65,10 +77,28 @@ export default function JournalClient() {
     }
   }
 
-  return (
-    <div className="grid md:grid-cols-3 gap-6">
-      <div className="md:col-span-1">
+  const renderNewEntryCard = () => {
+    if (!apiKey) {
+      return (
         <Card>
+           <CardHeader>
+            <CardTitle>New Entry</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>API Key Required</AlertTitle>
+              <AlertDescription>
+                Please <Link href="/settings" className="underline font-semibold">set your API key</Link> to enable journal analysis.
+              </AlertDescription>
+            </Alert>
+          </CardContent>
+        </Card>
+      );
+    }
+
+    return (
+       <Card>
           <CardHeader>
             <CardTitle>New Entry</CardTitle>
             <CardDescription>What's on your mind?</CardDescription>
@@ -89,6 +119,13 @@ export default function JournalClient() {
             </Button>
           </CardFooter>
         </Card>
+    );
+  }
+
+  return (
+    <div className="grid md:grid-cols-3 gap-6">
+      <div className="md:col-span-1">
+        {renderNewEntryCard()}
       </div>
 
       <div className="md:col-span-2">

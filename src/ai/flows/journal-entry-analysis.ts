@@ -8,11 +8,13 @@
  * - JournalEntryAnalysisOutput - The return type for the analyzeJournalEntry function.
  */
 
-import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import { genkit, generation, AI } from 'genkit';
+import { googleAI } from '@genkit-ai/googleai';
+import { z } from 'genkit';
 
 const JournalEntryAnalysisInputSchema = z.object({
   text: z.string().describe('The text content of the journal entry.'),
+  apiKey: z.string().optional().describe('The user-provided Gemini API key.'),
 });
 export type JournalEntryAnalysisInput = z.infer<typeof JournalEntryAnalysisInputSchema>;
 
@@ -36,20 +38,24 @@ export async function analyzeJournalEntry(
   return journalEntryAnalysisFlow(input);
 }
 
-const prompt = ai.definePrompt({
+const prompt = generation.definePrompt({
   name: 'journalEntryAnalysisPrompt',
   input: {schema: JournalEntryAnalysisInputSchema},
   output: {schema: JournalEntryAnalysisOutputSchema},
   prompt: `Analyze the following journal entry text and determine the sentiment and mood label.\n\nText: {{{text}}}\n\nSentiment: \nMood Label: `,
 });
 
-const journalEntryAnalysisFlow = ai.defineFlow(
+const journalEntryAnalysisFlow = AI.defineFlow(
   {
     name: 'journalEntryAnalysisFlow',
     inputSchema: JournalEntryAnalysisInputSchema,
     outputSchema: JournalEntryAnalysisOutputSchema,
   },
   async input => {
+    const ai = genkit({
+      plugins: [googleAI({ apiKey: input.apiKey || process.env.GEMINI_API_KEY })],
+      model: 'googleai/gemini-2.0-flash',
+    });
     const {output} = await prompt(input);
     return output!;
   }

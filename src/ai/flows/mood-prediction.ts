@@ -9,13 +9,15 @@
  * - MoodPredictionOutput - The return type for the predictMood function.
  */
 
-import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import { genkit, generation, AI } from 'genkit';
+import { googleAI } from '@genkit-ai/googleai';
+import { z } from 'genkit';
 
 const MoodPredictionInputSchema = z.object({
   faceEmbedding: z.array(z.number()).optional().describe('Facial expression embedding.'),
   audioEmbedding: z.array(z.number()).optional().describe('Voice tone embedding.'),
   text: z.string().optional().describe('Text input from the user.'),
+  apiKey: z.string().optional().describe('The user-provided Gemini API key.'),
 });
 export type MoodPredictionInput = z.infer<typeof MoodPredictionInputSchema>;
 
@@ -38,20 +40,24 @@ export async function predictMood(input: MoodPredictionInput): Promise<MoodPredi
   return predictMoodFlow(input);
 }
 
-const prompt = ai.definePrompt({
+const prompt = generation.definePrompt({
   name: 'moodPredictionPrompt',
   input: {schema: MoodPredictionInputSchema},
   output: {schema: MoodPredictionOutputSchema},
   prompt: `You are an AI trained to predict the mood of a user based on their facial expressions, voice tone, and text input.\n\nAnalyze the following data to predict the user's mood:\n\nFacial Expression Embedding: {{#if faceEmbedding}}{{{faceEmbedding}}}{{else}}Not provided{{/if}}\nVoice Tone Embedding: {{#if audioEmbedding}}{{{audioEmbedding}}}{{else}}Not provided{{/if}}\nText Input: {{#if text}}{{{text}}}{{else}}Not provided{{/if}}\n\nBased on this analysis, predict the user's mood and provide a recommended action.\n\nEnsure that the output is structured to match the schema descriptions.`, // Ensure output matches schema descriptions
 });
 
-const predictMoodFlow = ai.defineFlow(
+const predictMoodFlow = AI.defineFlow(
   {
     name: 'predictMoodFlow',
     inputSchema: MoodPredictionInputSchema,
     outputSchema: MoodPredictionOutputSchema,
   },
   async input => {
+    const ai = genkit({
+      plugins: [googleAI({ apiKey: input.apiKey || process.env.GEMINI_API_KEY })],
+      model: 'googleai/gemini-2.0-flash',
+    });
     const {output} = await prompt(input);
     return output!;
   }

@@ -7,8 +7,9 @@
  * - ChatCompanionOutput - The return type for the chatWithCompanion function.
  */
 
-import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import { genkit, generation, AI } from 'genkit';
+import { googleAI } from '@genkit-ai/googleai';
+import { z } from 'genkit';
 
 const ChatCompanionInputSchema = z.object({
   message: z.string().describe('The user message to the chat companion.'),
@@ -16,6 +17,7 @@ const ChatCompanionInputSchema = z.object({
     .array(z.number())
     .optional()
     .describe('Optional context embeddings for the conversation.'),
+  apiKey: z.string().optional().describe('The user-provided Gemini API key.'),
 });
 export type ChatCompanionInput = z.infer<typeof ChatCompanionInputSchema>;
 
@@ -32,7 +34,7 @@ export async function chatWithCompanion(input: ChatCompanionInput): Promise<Chat
   return chatCompanionFlow(input);
 }
 
-const chatCompanionPrompt = ai.definePrompt({
+const prompt = generation.definePrompt({
   name: 'chatCompanionPrompt',
   input: {schema: ChatCompanionInputSchema},
   output: {schema: ChatCompanionOutputSchema},
@@ -41,14 +43,19 @@ const chatCompanionPrompt = ai.definePrompt({
 User message: {{{message}}}`,
 });
 
-const chatCompanionFlow = ai.defineFlow(
+const chatCompanionFlow = AI.defineFlow(
   {
     name: 'chatCompanionFlow',
     inputSchema: ChatCompanionInputSchema,
     outputSchema: ChatCompanionOutputSchema,
   },
   async input => {
-    const {output} = await chatCompanionPrompt(input);
+    const ai = genkit({
+      plugins: [googleAI({ apiKey: input.apiKey || process.env.GEMINI_API_KEY })],
+      model: 'googleai/gemini-2.0-flash',
+    });
+
+    const {output} = await prompt(input);
     return output!;
   }
 );
