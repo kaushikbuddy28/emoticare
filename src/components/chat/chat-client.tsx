@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useRef, useEffect, useTransition } from "react"
@@ -17,6 +18,15 @@ const initialMessages: ChatMessage[] = [
     content: "Hello! I'm your supportive AI companion. How are you feeling today? Feel free to share what's on your mind.",
   },
 ]
+
+const commonOfflineResponses: Record<string, string> = {
+  "hello": "Hello! I'm here to help. Please note that you are currently offline, so my responses are limited.",
+  "hi": "Hi there! I'm listening. Please note that you are currently offline, so my responses are limited.",
+  "how are you": "I'm a bot, but I'm ready to listen. How are you doing?",
+  "help": "I can provide support by listening to you. Just type what's on your mind. For immediate help, please visit the Support page.",
+  "tell me a joke": "Why don't scientists trust atoms? Because they make up everything! I hope that brought a little smile.",
+  "thanks": "You're welcome! I'm here if you need anything else."
+};
 
 export default function ChatClient() {
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages)
@@ -41,13 +51,27 @@ export default function ChatClient() {
     if (!input.trim() || isPending) return;
 
     setError(null);
-    const userMessage: ChatMessage = { role: "user", content: input }
+    const currentInput = input;
+    const userMessage: ChatMessage = { role: "user", content: currentInput }
     setMessages((prev) => [...prev, userMessage])
     setInput("")
 
+    // Offline handling
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+        const normalizedInput = currentInput.trim().toLowerCase();
+        const offlineResponse = commonOfflineResponses[normalizedInput];
+        
+        const assistantMessage: ChatMessage = {
+            role: "assistant",
+            content: offlineResponse || "It seems you're offline. I can only provide limited responses right now. Please check your connection to chat with me fully."
+        };
+        setMessages((prev) => [...prev, assistantMessage]);
+        return;
+    }
+
     startTransition(async () => {
       try {
-        const res = await getChatResponse({ message: input });
+        const res = await getChatResponse({ message: currentInput });
         const assistantMessage: ChatMessage = { role: "assistant", content: res.response };
         setMessages((prev) => [...prev, assistantMessage]);
         if (res.suggested_actions) {
