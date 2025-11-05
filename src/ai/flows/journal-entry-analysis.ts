@@ -9,6 +9,8 @@
  */
 
 import { ai } from '@/ai/genkit';
+import { genkit } from 'genkit';
+import { googleAI } from '@genkit-ai/google-genai';
 import { z } from 'zod';
 
 const JournalEntryAnalysisInputSchema = z.object({
@@ -51,7 +53,14 @@ const journalEntryAnalysisFlow = ai.defineFlow(
     outputSchema: JournalEntryAnalysisOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input);
+    let runner = ai;
+    if (input.apiKey) {
+      runner = genkit({
+        plugins: [googleAI({ apiKey: input.apiKey })],
+      });
+    }
+
+    const {output} = await runner.run(prompt, input);
     return output!;
   }
 );

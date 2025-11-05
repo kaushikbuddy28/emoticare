@@ -8,6 +8,8 @@
  */
 
 import { ai } from '@/ai/genkit';
+import { genkit } from 'genkit';
+import { googleAI } from '@genkit-ai/google-genai';
 import { z } from 'zod';
 
 const ChatCompanionInputSchema = z.object({
@@ -49,9 +51,14 @@ const chatCompanionFlow = ai.defineFlow(
     outputSchema: ChatCompanionOutputSchema,
   },
   async input => {
-    // Note: The global 'ai' instance is used here. If a user-specific API key is needed,
-    // a local instance would be created, but for now, we rely on the server's environment variable.
-    const {output} = await prompt(input);
+    let runner = ai;
+    if (input.apiKey) {
+      runner = genkit({
+        plugins: [googleAI({ apiKey: input.apiKey })],
+      });
+    }
+
+    const {output} = await runner.run(prompt, input);
     return output!;
   }
 );

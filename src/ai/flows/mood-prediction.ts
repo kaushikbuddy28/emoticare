@@ -9,6 +9,8 @@
  */
 
 import { ai } from '@/ai/genkit';
+import { genkit } from 'genkit';
+import { googleAI } from '@genkit-ai/google-genai';
 import { z } from 'zod';
 
 const MoodPredictionInputSchema = z.object({
@@ -52,7 +54,14 @@ const predictMoodFlow = ai.defineFlow(
     outputSchema: MoodPredictionOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input);
+    let runner = ai;
+    if (input.apiKey) {
+      runner = genkit({
+        plugins: [googleAI({ apiKey: input.apiKey })],
+      });
+    }
+
+    const {output} = await runner.run(prompt, input);
     return output!;
   }
 );
