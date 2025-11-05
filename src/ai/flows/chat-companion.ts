@@ -8,8 +8,6 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { genkit } from 'genkit';
-import { googleAI } from '@genkit-ai/google-genai';
 import { z } from 'zod';
 
 const ChatCompanionInputSchema = z.object({
@@ -18,7 +16,6 @@ const ChatCompanionInputSchema = z.object({
     .array(z.number())
     .optional()
     .describe('Optional context embeddings for the conversation.'),
-  apiKey: z.string().optional().describe('The user-provided Gemini API key.'),
 });
 export type ChatCompanionInput = z.infer<typeof ChatCompanionInputSchema>;
 
@@ -51,14 +48,7 @@ const chatCompanionFlow = ai.defineFlow(
     outputSchema: ChatCompanionOutputSchema,
   },
   async input => {
-    let runner = ai;
-    if (input.apiKey) {
-      runner = genkit({
-        plugins: [googleAI({ apiKey: input.apiKey })],
-      });
-    }
-
-    const {output} = await runner.run(prompt, input);
+    const {output} = await ai.run(prompt, input);
     return output!;
   }
 );

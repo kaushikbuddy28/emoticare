@@ -8,7 +8,6 @@ import {
   HeartHandshake,
   LayoutDashboard,
   Scan,
-  Settings,
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import {
@@ -32,10 +31,6 @@ const menuItems = [
   { href: '/support', label: 'Support', icon: HeartHandshake },
 ];
 
-const secondaryMenuItems = [
-    { href: '/settings', label: 'Settings', icon: Settings },
-];
-
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
@@ -54,22 +49,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           <SidebarContent className='flex flex-col justify-between'>
             <SidebarMenu>
               {menuItems.map((item) => (
-                <SidebarMenuItem key={item.href}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={pathname.startsWith(item.href)}
-                    tooltip={{ children: item.label }}
-                  >
-                    <Link href={item.href}>
-                      <item.icon />
-                      <span>{item.label}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-            <SidebarMenu>
-                 {secondaryMenuItems.map((item) => (
                 <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton
                     asChild

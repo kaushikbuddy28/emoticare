@@ -2,19 +2,15 @@
 
 import { useState, useTransition } from "react"
 import { format, parseISO } from "date-fns"
-import { Loader2, Sparkles, Wand2, AlertTriangle } from "lucide-react"
+import { Loader2, Wand2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
-import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
 import type { JournalEntry } from "@/lib/types"
 import { analyzeJournalEntryAction } from "@/lib/actions"
-import { useApiKey } from "../api-key-provider"
-import { Alert, AlertDescription, AlertTitle } from "../ui/alert"
-import Link from "next/link"
 
 const mockEntries: JournalEntry[] = [
   {
@@ -34,18 +30,17 @@ const mockEntries: JournalEntry[] = [
 ]
 
 export default function JournalClient() {
-  const { apiKey } = useApiKey();
   const [entries, setEntries] = useState<JournalEntry[]>(mockEntries)
   const [newEntry, setNewEntry] = useState("")
   const [isPending, startTransition] = useTransition()
   const { toast } = useToast()
 
   const handleSaveEntry = () => {
-    if (!newEntry.trim() || !apiKey) return
+    if (!newEntry.trim()) return
 
     startTransition(async () => {
       try {
-        const result = await analyzeJournalEntryAction({ text: newEntry, apiKey })
+        const result = await analyzeJournalEntryAction({ text: newEntry })
         const entry: JournalEntry = {
           id: new Date().toISOString(),
           createdAt: new Date().toISOString(),
@@ -63,7 +58,7 @@ export default function JournalClient() {
         toast({
           variant: 'destructive',
           title: 'Analysis Failed',
-          description: 'Could not analyze entry. Please check your API key and try again.',
+          description: 'Could not analyze entry. Please try again later.',
         });
       }
     })
@@ -78,25 +73,6 @@ export default function JournalClient() {
   }
 
   const renderNewEntryCard = () => {
-    if (!apiKey) {
-      return (
-        <Card>
-           <CardHeader>
-            <CardTitle>New Entry</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Alert variant="destructive">
-              <AlertTriangle className="h-4 w-4" />
-              <AlertTitle>API Key Required</AlertTitle>
-              <AlertDescription>
-                Please <Link href="/settings" className="underline font-semibold">set your API key</Link> to enable journal analysis.
-              </AlertDescription>
-            </Alert>
-          </CardContent>
-        </Card>
-      );
-    }
-
     return (
        <Card>
           <CardHeader>
@@ -149,6 +125,7 @@ export default function JournalClient() {
                     </div>
                   </div>
                   <p className="mt-2 text-sm text-foreground/80">{entry.content}</p>
+
                 </div>
               )) : (
                 <p className="text-sm text-muted-foreground text-center py-8">You have no journal entries yet.</p>

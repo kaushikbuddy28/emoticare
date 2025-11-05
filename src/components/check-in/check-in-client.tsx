@@ -2,7 +2,7 @@
 "use client"
 
 import { useState, useTransition, useEffect, useRef } from "react"
-import { Camera, Mic, FileText, Sparkles, Loader2, ArrowRight, ArrowLeft, AlertTriangle } from "lucide-react"
+import { Camera, Mic, FileText, Sparkles, Loader2, ArrowRight, ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
@@ -12,8 +12,6 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import type { MoodPredictionOutput } from "@/ai/flows/mood-prediction"
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, LabelList } from "recharts"
 import { useToast } from "@/hooks/use-toast"
-import { useApiKey } from "../api-key-provider"
-import Link from "next/link"
 
 type Step = "face" | "voice" | "text" | "result"
 
@@ -72,7 +70,6 @@ function AudioVisualizer({ stream }: { stream: MediaStream | null }) {
 }
 
 export default function CheckInClient() {
-  const { apiKey } = useApiKey();
   const [currentStep, setCurrentStep] = useState<Step>("face")
   const [textInput, setTextInput] = useState("")
   const [result, setResult] = useState<MoodPredictionOutput | null>(null)
@@ -184,7 +181,6 @@ export default function CheckInClient() {
           faceEmbedding: [], // Mocked
           audioEmbedding: [], // Mocked
           text: textInput,
-          apiKey: apiKey || undefined,
         })
         setResult(prediction)
         setCurrentStep("result")
@@ -192,7 +188,7 @@ export default function CheckInClient() {
         toast({
           variant: 'destructive',
           title: 'Prediction Failed',
-          description: 'Could not get mood prediction. Please check your API key and try again.',
+          description: 'Could not get mood prediction. Please try again later.',
         });
       }
     })
@@ -205,22 +201,6 @@ export default function CheckInClient() {
   }
   
   const StepIcon = steps[currentStepIndex].icon;
-
-  if (!apiKey) {
-    return (
-        <div className="flex items-center justify-center h-full p-4 sm:p-6">
-            <Alert variant="destructive" className="max-w-md">
-                <AlertTriangle className="h-4 w-4" />
-                <AlertTitle>API Key Not Found</AlertTitle>
-                <AlertDescription>
-                    You need to set a Gemini API key to use the Check-in feature. Please go to the{' '}
-                    <Link href="/settings" className="underline font-semibold">Settings</Link> page to add your key.
-                </AlertDescription>
-            </Alert>
-        </div>
-    );
-  }
-
 
   const renderStepContent = () => {
     switch (currentStep) {

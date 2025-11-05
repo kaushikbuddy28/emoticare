@@ -1,18 +1,15 @@
 "use client"
 
 import { useState, useRef, useEffect, useTransition } from "react"
-import { Bot, User, CornerDownLeft, Loader2, BookCheck, AlertTriangle } from "lucide-react"
+import { Bot, User, CornerDownLeft, Loader2, BookCheck } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { getChatResponse } from "@/lib/actions"
 import type { ChatMessage } from "@/lib/types"
 import { cn } from "@/lib/utils"
-import { useApiKey } from "../api-key-provider"
-import { Alert, AlertDescription, AlertTitle } from "../ui/alert"
-import Link from "next/link"
 
 const initialMessages: ChatMessage[] = [
   {
@@ -22,7 +19,6 @@ const initialMessages: ChatMessage[] = [
 ]
 
 export default function ChatClient() {
-  const { apiKey } = useApiKey();
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages)
   const [input, setInput] = useState("")
   const [isPending, startTransition] = useTransition()
@@ -42,7 +38,7 @@ export default function ChatClient() {
   
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!input.trim() || isPending || !apiKey) return;
+    if (!input.trim() || isPending) return;
 
     setError(null);
     const userMessage: ChatMessage = { role: "user", content: input }
@@ -51,33 +47,18 @@ export default function ChatClient() {
 
     startTransition(async () => {
       try {
-        const res = await getChatResponse({ message: input, apiKey });
+        const res = await getChatResponse({ message: input });
         const assistantMessage: ChatMessage = { role: "assistant", content: res.response };
         setMessages((prev) => [...prev, assistantMessage]);
         if (res.suggested_actions) {
           setSuggestedActions(res.suggested_actions);
         }
       } catch (e: any) {
-        setError("An error occurred. Your API key might be invalid or expired.");
-        const assistantMessage: ChatMessage = { role: "assistant", content: "I'm sorry, I couldn't process that. Please check your API key in the settings and try again." };
+        setError("An error occurred. The AI service may be temporarily unavailable.");
+        const assistantMessage: ChatMessage = { role: "assistant", content: "I'm sorry, I couldn't process that. Please try again later." };
         setMessages((prev) => [...prev, assistantMessage]);
       }
     });
-  }
-
-  if (!apiKey) {
-    return (
-      <div className="flex items-center justify-center h-full p-4 sm:p-6">
-        <Alert variant="destructive" className="max-w-md">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>API Key Not Found</AlertTitle>
-          <AlertDescription>
-            You need to set a Gemini API key to use the AI Chat Companion. Please go to the{' '}
-            <Link href="/settings" className="underline font-semibold">Settings</Link> page to add your key.
-          </AlertDescription>
-        </Alert>
-      </div>
-    );
   }
 
   return (

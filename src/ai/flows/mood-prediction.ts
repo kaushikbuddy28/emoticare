@@ -9,15 +9,12 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { genkit } from 'genkit';
-import { googleAI } from '@genkit-ai/google-genai';
 import { z } from 'zod';
 
 const MoodPredictionInputSchema = z.object({
   faceEmbedding: z.array(z.number()).optional().describe('Facial expression embedding.'),
   audioEmbedding: z.array(z.number()).optional().describe('Voice tone embedding.'),
   text: z.string().optional().describe('Text input from the user.'),
-  apiKey: z.string().optional().describe('The user-provided Gemini API key.'),
 });
 export type MoodPredictionInput = z.infer<typeof MoodPredictionInputSchema>;
 
@@ -54,14 +51,7 @@ const predictMoodFlow = ai.defineFlow(
     outputSchema: MoodPredictionOutputSchema,
   },
   async input => {
-    let runner = ai;
-    if (input.apiKey) {
-      runner = genkit({
-        plugins: [googleAI({ apiKey: input.apiKey })],
-      });
-    }
-
-    const {output} = await runner.run(prompt, input);
+    const {output} = await ai.run(prompt, input);
     return output!;
   }
 );
