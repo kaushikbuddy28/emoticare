@@ -59,11 +59,11 @@ export default function ChatClient() {
     // Offline handling
     if (typeof navigator !== 'undefined' && !navigator.onLine) {
         const normalizedInput = currentInput.trim().toLowerCase();
-        const offlineResponse = commonOfflineResponses[normalizedInput];
+        const offlineResponse = commonOfflineResponses[normalizedInput] || "It seems you're offline. I can only provide limited responses right now. Please check your connection to chat with me fully.";
         
         const assistantMessage: ChatMessage = {
             role: "assistant",
-            content: offlineResponse || "It seems you're offline. I can only provide limited responses right now. Please check your connection to chat with me fully."
+            content: offlineResponse
         };
         setMessages((prev) => [...prev, assistantMessage]);
         return;
@@ -78,8 +78,8 @@ export default function ChatClient() {
           setSuggestedActions(res.suggested_actions);
         }
       } catch (e: any) {
-        setError("An error occurred. The AI service may be temporarily unavailable.");
-        const assistantMessage: ChatMessage = { role: "assistant", content: "I'm sorry, I couldn't process that. Please try again later." };
+        setError("An error occurred. You might be offline.");
+        const assistantMessage: ChatMessage = { role: "assistant", content: "you are offline" };
         setMessages((prev) => [...prev, assistantMessage]);
       }
     });
