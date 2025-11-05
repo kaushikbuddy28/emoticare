@@ -1,3 +1,5 @@
+'use server';
+
 import {genkit} from 'genkit';
 import {googleAI} from '@genkit-ai/googleai';
 
@@ -5,5 +7,6 @@ import {googleAI} from '@genkit-ai/googleai';
 // For flows that do, a new, locally-scoped `ai` instance will be created with the user's key.
 export const ai = genkit({
   plugins: [googleAI()],
-  model: 'googleai/gemini-2.0-flash',
+  // You can move the model to the prompt or flow if you need to use different models.
+  // model: 'googleai/gemini-1.5-flash', 
 });
