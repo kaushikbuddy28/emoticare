@@ -22,10 +22,14 @@ const initialMessages: ChatMessage[] = [
 const commonOfflineResponses: Record<string, string> = {
   "hello": "Hello! I'm here to help. Please note that you are currently offline, so my responses are limited.",
   "hi": "Hi there! I'm listening. Please note that you are currently offline, so my responses are limited.",
+  "hy": "hello bro",
   "how are you": "I'm a bot, but I'm ready to listen. How are you doing?",
   "help": "I can provide support by listening to you. Just type what's on your mind. For immediate help, please visit the Support page.",
   "tell me a joke": "Why don't scientists trust atoms? Because they make up everything! I hope that brought a little smile.",
-  "thanks": "You're welcome! I'm here if you need anything else."
+  "thanks": "You're welcome! I'm here if you need anything else.",
+  "best college": "Silver Oak",
+  "best collage": "Silver Oak",
+  "best teacher": "they was seat on the chair",
 };
 
 export default function ChatClient() {
@@ -34,6 +38,7 @@ export default function ChatClient() {
   const [isPending, startTransition] = useTransition()
   const [suggestedActions, setSuggestedActions] = useState<string[]>([])
   const [error, setError] = useState<string | null>(null);
+  const [offlineAttempts, setOfflineAttempts] = useState(0);
 
   const scrollAreaRef = useRef<HTMLDivElement>(null)
 
@@ -58,6 +63,16 @@ export default function ChatClient() {
 
     // Offline handling
     if (typeof navigator !== 'undefined' && !navigator.onLine) {
+        if(offlineAttempts >= 2) {
+            const assistantMessage: ChatMessage = {
+                role: "assistant",
+                content: "It seems you are still offline. Please refresh the page to try reconnecting."
+            };
+            setMessages((prev) => [...prev, assistantMessage]);
+            setOfflineAttempts(offlineAttempts + 1);
+            return;
+        }
+
         const normalizedInput = currentInput.trim().toLowerCase();
         const offlineResponse = commonOfflineResponses[normalizedInput] || "It seems you're offline. I can only provide limited responses right now. Please check your connection to chat with me fully.";
         
@@ -66,8 +81,12 @@ export default function ChatClient() {
             content: offlineResponse
         };
         setMessages((prev) => [...prev, assistantMessage]);
+        setOfflineAttempts(offlineAttempts + 1);
         return;
     }
+
+    // Reset offline attempts on successful online message
+    setOfflineAttempts(0);
 
     startTransition(async () => {
       try {
