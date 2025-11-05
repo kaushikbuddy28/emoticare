@@ -1,6 +1,6 @@
 'use server';
 
-import {genkit} from '@genkit-ai/next';
+import {genkit} from 'genkit';
 import {googleAI} from '@genkit-ai/google-genai';
 
 // This global `ai` instance will be used for flows that do not require a user-provided API key.
